@@ -1,16 +1,18 @@
 // constants
-var COLS = 26, ROWS = 26;
+var COLS=26, ROWS=26;
 // image IDs
-EMPTY = 0, SNAKE = 1, FRUIT = 2;
+EMPTY=0, SNAKE=1, FRUIT=2;
 // directions
-var LEFT=0, UP=1, RIGHT=2, DOWN = 3;
+var LEFT=0, UP=1, RIGHT=2, DOWN=3;
+// keyCodes
+var KEY_LEFT=37, KEY_UP=38, KEY_RIGHT=39, KEY_DOWN=40;
 
 var grid = {
   width:  null,
   height: null,
   _grid:  null,
 
-  init: function (default, cols, rows){
+  init: function (d, cols, rows){
     this.width = cols;
     this.rows  = rows;
 
@@ -19,11 +21,9 @@ var grid = {
     for (var x=0 ; x < cols ; x++){
       this._grid.push([]);
       for (var y=0 ; y < rows ; y++){
-        this._grid[x].push(default)
+        this._grid[x].push(d);
       }
     }
-
-
   },
 
   set: function (val, x, y){
@@ -33,8 +33,7 @@ var grid = {
   get: function(x, y){
     return this._grid[x][y];
   }
-
-}
+};
 
 var snake = {
   direction: null,
@@ -48,14 +47,14 @@ var snake = {
   },
 
   insert: function(x, y){
-    this._queue.unshift({x:x, y:y})
+    this._queue.unshift({x:x, y:y});
     this.last = this._queue[0];
   },
 
   remove: function(){
     return this._queue.pop();
   }
-}
+};
 
 function setFood(){
   var empty = [];
@@ -71,17 +70,50 @@ function setFood(){
 }
 
 //Game objects
-var canvas, ctx, keystate, frames;
+var canvas, ctx, keystate, framed;
 
 function main(){
+  console.log("running main");
   canvas = document.createElement("canvas");
   canvas.width  = COLS*20;
   canvas.height = ROWS*20;
   ctx = canvas.getContext("2d");
   document.body.appendChild(canvas);
 
-  frames = 0;
+  framed = 0;
   keystate = {};
+  document.addEventListener("keydown", function(event){
+    if (event.defaultPrevented) {
+    return;
+    }
+    console.log("key was pressed");
+    switch (event.key) {
+      case "ArrowDown":
+        console.log("Down");
+        keystate[event.keyCode] = true;
+        break;
+      case "ArrowUp":
+        console.log("Up");
+        keystate[event.keyCode] = true;
+        break;
+      case "ArrowLeft":
+        console.log("Left");
+        keystate[event.keyCode] = true;
+        break;
+      case "ArrowRight":
+        console.log("Right");
+        keystate[event.keyCode] = true;
+        break;
+      default:
+        return;
+      }
+      event.preventDefault();
+  }, true);
+
+  document.addEventListener("keyup", function(event){
+    delete keystate[event.keyCode];
+  });
+
   init();
   loop();
 
@@ -104,7 +136,44 @@ function loop() {
 
 
 function update() {
-  frames++;
+  framed++;
+
+  if (keystate[KEY_LEFT]) snake.direction = LEFT;
+  if (keystate[KEY_UP]) snake.direction = UP;
+  if (keystate[KEY_RIGHT]) snake.direction = RIGHT;
+  if (keystate[KEY_DOWN]) snake.direction = DOWN;
+
+  if (framed%5 === 0){
+    var newx = snake.last.x;
+    var newy = snake.last.y;
+
+    switch (snake.direction){
+      case LEFT:
+        newx--;
+        break;
+      case UP:
+        newy--;
+        break;
+      case RIGHT:
+        newx++;
+        break;
+      case DOWN:
+        newy++;
+        break;
+    }
+
+    if (0 > newx || newx > grid.width-1 ||
+        0 > newy || newy > grid.height-1){
+      return init();
+    }
+    var tail = snake.remove();
+    grid.set(EMPTY, tail.x, tail.y);
+    tail.x = newx;
+    tail.y = newy;
+    grid.set(SNAKE, tail.x, tail.y);
+
+    snake.insert(tail.x,tail.y);
+  }
 }
 
 function draw(){
@@ -127,5 +196,4 @@ function draw(){
       ctx.fillRect(z*twidth, y*theight, twidth, theight);
     }
   }
-
 }

@@ -1,3 +1,6 @@
 Rails.application.routes.draw do
-  # get 'snake#index'
+
+  get 'snakegames' => 'snakegames#index'
+  get 'tests' => 'tests#index'
 end
+
